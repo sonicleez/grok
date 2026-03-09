@@ -10,13 +10,24 @@ Your task is to generate a highly detailed, vivid, and rich descriptive prompt f
 CRITICAL INSTRUCTIONS:
 You MUST ALWAYS use this exact "Golden 4-part formula" for your output. Do not skip any parts. Output ONLY the resulting prompt paragraph.
 
-1. [What we see] - A detailed and vivid description of the main subject, setting, ambiance, and lighting. Do not just say "a man", describe his expression, what he is wearing, the background, the mood, and the lighting in detail.
+1. [What we see] - A detailed and vivid description of the main subject, setting, ambiance, and lighting. Do not just say "a man", describe his expression, what he is wearing, the background, the mood, and the lighting in detail. IMPORTANT: Describe the ENTIRE scene with UNIFORM SHARPNESS — every element (foreground, midground, background) must be equally sharp and in focus. Do NOT describe any blurred backgrounds or soft-focus areas.
 2. [What moves] - Explicitly and richly describe the motion of the subject, natural physics, environment, and facial expressions (e.g., "He gestures intensely with his hands, chest heaving with heavy breaths, hair blowing in the wind, as the background trees sway softly"). Incorporate any USER CONTEXT about tone/emotion/voice here.
-3. [Camera motion] - Explicitly describe the cinematic camera movement (e.g., "Slow cinematic push-in", "Gentle dolly forward", "Dynamic tracking shot", "Handheld shaky cam").
-4. [Constraints + Style] - ALWAYS append EXACTLY this string at the very end of your response, word for word: "Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail."
+3. [Camera motion] - Explicitly describe the cinematic camera movement (e.g., "Slow cinematic push-in", "Gentle dolly forward", "Dynamic tracking shot", "Handheld shaky cam"). IMPORTANT: Do NOT use any shallow depth-of-field or rack focus. The camera must maintain DEEP FOCUS where everything stays sharp.
+4. [Constraints + Style] - ALWAYS append EXACTLY this string at the very end of your response, word for word: "Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail. No bokeh, no depth-of-field blur, no lens blur, no gaussian blur, no tilt-shift, no background blur — everything must be sharp and in focus with deep depth of field."
+
+ABSOLUTELY FORBIDDEN — NEVER include any of these in your prompt:
+- Bokeh, bokeh balls, bokeh lights, bokeh effect
+- Depth-of-field blur, shallow depth of field, narrow depth of field
+- Background blur, foreground blur, soft focus, out-of-focus areas
+- Lens blur, gaussian blur, motion blur on static objects
+- Tilt-shift effect, miniature effect
+- Rack focus, focus pull, selective focus
+- Any description that implies parts of the scene are blurred or out of focus
+- Phrases like "blurred background", "soft bokeh", "creamy bokeh", "dreamy blur"
+Instead, ALWAYS describe the scene with DEEP FOCUS where ALL elements are crisp and sharp.
 
 TEMPLATE (Your output MUST follow this structure):
-[Detailed description of what we see]. [Detailed description of what moves]. [Camera motion]. Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail.
+[Detailed description of what we see — everything sharp and in focus]. [Detailed description of what moves]. [Camera motion with deep focus]. Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail. No bokeh, no depth-of-field blur, no lens blur, no gaussian blur, no tilt-shift, no background blur — everything must be sharp and in focus with deep depth of field.
 
 Output ONLY the final English prompt text. NO INTRODUCTION, NO EXPLANATION, NO MARKDOWN FORMATTING (no bolding, no bullet points). Make the prompt descriptive and rich!`;
 
