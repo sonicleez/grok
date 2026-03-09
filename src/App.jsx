@@ -19,6 +19,8 @@ function App() {
   const fileInputRef = useRef(null);
   const zipInputRef = useRef(null);
 
+  const [isStateLoaded, setIsStateLoaded] = useState(false);
+
   // Load state on mount
   useEffect(() => {
     const state = loadState();
@@ -26,14 +28,22 @@ function App() {
       if (state.apiKey) setApiKey(state.apiKey);
       if (state.model) setModel(state.model);
       if (state.contextPrompt) setContextPrompt(state.contextPrompt);
-      if (state.images) setImages(state.images);
+      if (state.images) {
+        const resetImages = state.images.map(img =>
+          img.status === 'processing' ? { ...img, status: 'pending' } : img
+        );
+        setImages(resetImages);
+      }
     }
+    setIsStateLoaded(true);
   }, []);
 
   // Save state on changes
   useEffect(() => {
-    saveState({ apiKey, model, contextPrompt, images: images.map(img => ({ ...img, file: null, url: null })) });
-  }, [apiKey, model, contextPrompt, images]);
+    if (isStateLoaded) {
+      saveState({ apiKey, model, contextPrompt, images: images.map(img => ({ ...img, file: null, url: null })) });
+    }
+  }, [apiKey, model, contextPrompt, images, isStateLoaded]);
 
   // Load images from IndexedDB when rendering and URL is missing
   const [base64Cache, setBase64Cache] = useState({});
