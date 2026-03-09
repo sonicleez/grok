@@ -1,0 +1,245 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.accent-icon {
+  color: var(--accent-color);
+  width: 32px;
+  height: 32px;
+}
+
+.logo h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  background: var(--text-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.settings-panel {
+  margin: 16px 32px 0 32px;
+  padding: 24px;
+}
+
+.settings-panel h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  padding: 24px 32px;
+  flex: 1;
+}
+
+.sidebar {
+  padding: 24px;
+  height: max-content;
+  position: sticky;
+  top: 100px;
+}
+
+.sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-buttons .btn {
+  justify-content: flex-start;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid var(--surface-border);
+  margin: 8px 0;
+}
+
+.btn.danger {
+  color: var(--danger-color);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger-color);
+}
+
+.stats {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.stats p {
+  margin-bottom: 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.empty-icon {
+  color: var(--surface-border);
+  margin-bottom: 16px;
+}
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.gallery-item {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.gallery-item.status-processing {
+  border-color: var(--warning-color);
+  box-shadow: 0 0 0 1px var(--warning-color);
+}
+
+.gallery-item.status-done {
+  border-color: var(--success-color);
+}
+
+.gallery-item.status-error {
+  border-color: var(--danger-color);
+}
+
+.image-wrapper {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.image-meta {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filename {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.pending {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.status-badge.processing {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning-color);
+}
+
+.status-badge.done {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success-color);
+}
+
+.status-badge.error {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger-color);
+}
+
+.prompt-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.prompt-area {
+  flex: 1;
+  resize: vertical;
+  min-height: 150px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .gallery-item {
+    grid-template-columns: 1fr;
+  }
+}
