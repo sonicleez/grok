@@ -259,7 +259,7 @@ function App() {
               <option value="gemini-3-flash">Gemini 3 Flash (Fast & Vision)</option>
               <option value="gemini-3-pro">Gemini 3 Pro</option>
               <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-              <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+              <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
               <option value="claude-opus-4-6">Claude Opus 4.6</option>
               <option value="grok-code-fast-1">Grok Fast</option>
               <option value="gpt-5.4">GPT-5.4</option>
@@ -295,7 +295,7 @@ function App() {
                 className="input-base"
                 rows="4"
                 style={{ resize: 'vertical' }}
-                placeholder="E.g., Dark cinematic lighting, intense emotion, slow majestic motion..."
+                placeholder="E.g., Soft morning light, gentle breeze, calm atmosphere..."
                 value={contextPrompt}
                 onChange={(e) => setContextPrompt(e.target.value)}
               />

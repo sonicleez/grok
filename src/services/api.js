@@ -5,31 +5,19 @@
 const EZAI_BASE_URL = '/api/ezai';
 
 const GROK_SYSTEM_PROMPT = `You are an expert video director prompter for Grok.com/imagine (Image-to-Video) in 2026. 
-Your task is to generate a highly detailed, vivid, and rich descriptive prompt for a video generation model based on the provided image and any additional context.
+Your task is to generate a concise, cinematic prompt for a video generation model based on the provided image and context.
 
 CRITICAL INSTRUCTIONS:
-You MUST ALWAYS use this exact "Golden 4-part formula" for your output. Do not skip any parts. Output ONLY the resulting prompt paragraph.
+1. [Conciseness] - Keep the description brief. Do not over-describe.
+2. [What we see] - Describe the scene with UNIFORM SHARPNESS — everything must be crisp and in focus. ABSOLUTELY NO BOKEH or BLUR.
+3. [Subtle Motion] - Describe only natural or environmental motion (e.g., "soft wind", "subtle light shifts"). DO NOT describe detailed character actions or complex hero movements.
+4. [Camera Motion] - Use ONLY a "gentle dolly" or a "light pan". Keep it smooth and subtle.
 
-1. [What we see] - A detailed and vivid description of the main subject, setting, ambiance, and lighting. Do not just say "a man", describe his expression, what he is wearing, the background, the mood, and the lighting in detail. IMPORTANT: Describe the ENTIRE scene with UNIFORM SHARPNESS — every element (foreground, midground, background) must be equally sharp and in focus. Do NOT describe any blurred backgrounds or soft-focus areas.
-2. [What moves] - Explicitly and richly describe the motion of the subject, natural physics, environment, and facial expressions (e.g., "He gestures intensely with his hands, chest heaving with heavy breaths, hair blowing in the wind, as the background trees sway softly"). Incorporate any USER CONTEXT about tone/emotion/voice here.
-3. [Camera motion] - Explicitly describe the cinematic camera movement (e.g., "Slow cinematic push-in", "Gentle dolly forward", "Dynamic tracking shot", "Handheld shaky cam"). IMPORTANT: Do NOT use any shallow depth-of-field or rack focus. The camera must maintain DEEP FOCUS where everything stays sharp.
-4. [Constraints + Style] - ALWAYS append EXACTLY this string at the very end of your response, word for word: "Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail. No bokeh, no depth-of-field blur, no lens blur, no gaussian blur, no tilt-shift, no background blur — everything must be sharp and in focus with deep depth of field."
+TEMPLATE:
+[Brief scene description]. [Subtle environmental motion]. [Subtle camera move: dolly or pan]. Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail. No bokeh, no depth-of-field blur, no lens blur, no gaussian blur, no tilt-shift, no background blur — everything must be sharp and in focus with deep depth of field.
 
-ABSOLUTELY FORBIDDEN — NEVER include any of these in your prompt:
-- Bokeh, bokeh balls, bokeh lights, bokeh effect
-- Depth-of-field blur, shallow depth of field, narrow depth of field
-- Background blur, foreground blur, soft focus, out-of-focus areas
-- Lens blur, gaussian blur, motion blur on static objects
-- Tilt-shift effect, miniature effect
-- Rack focus, focus pull, selective focus
-- Any description that implies parts of the scene are blurred or out of focus
-- Phrases like "blurred background", "soft bokeh", "creamy bokeh", "dreamy blur"
-Instead, ALWAYS describe the scene with DEEP FOCUS where ALL elements are crisp and sharp.
+Output ONLY the final prompt text. No introduction, no explanations.`;
 
-TEMPLATE (Your output MUST follow this structure):
-[Detailed description of what we see — everything sharp and in focus]. [Detailed description of what moves]. [Camera motion with deep focus]. Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail. No bokeh, no depth-of-field blur, no lens blur, no gaussian blur, no tilt-shift, no background blur — everything must be sharp and in focus with deep depth of field.
-
-Output ONLY the final English prompt text. NO INTRODUCTION, NO EXPLANATION, NO MARKDOWN FORMATTING (no bolding, no bullet points). Make the prompt descriptive and rich!`;
 
 export const generateGrokPrompt = async (apiKey, model, base64Image, contextPrompt) => {
     if (!apiKey) {
@@ -75,8 +63,8 @@ export const generateGrokPrompt = async (apiKey, model, base64Image, contextProm
                     {
                         type: 'text',
                         text: contextPrompt && contextPrompt.trim().length > 0
-                            ? `Please generate the highly detailed Image-to-Video prompt for this image using the 4-part formula.\n\nCRUCIAL ADDITIONAL CONTEXT (Tone, Voice, Motion, Emotion from User):\n"${contextPrompt}"\n\nYou MUST incorporate this context deeply into the [What we see], [What moves], and [Camera motion] parts of your prompt. Remember to include the mandatory Constraints + Style text at the end.`
-                            : 'Please generate the highly detailed Image-to-Video prompt for this image using the 4-part formula. Describe the subject brightly, outline clear motion, detail the camera movement, and include the mandatory Constraints + Style text at the end.'
+                            ? `Generate a concise Image-to-Video prompt for this image.\n\nUSER CONTEXT:\n"${contextPrompt}"\n\nApply the context subtly. Focus on gentle camera motion (dolly or pan) and avoid detailed character actions. Ensure uniform sharpness.`
+                            : 'Generate a concise Image-to-Video prompt for this image. Focus on gentle camera motion (dolly or pan), subtle environmental motion, and uniform sharpness. Avoid detailed character actions.'
                     }
                 ]
             }
