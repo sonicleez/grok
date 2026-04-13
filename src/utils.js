@@ -38,7 +38,13 @@ export const exportProjectToZip = async (state, imagesData) => {
             if (base64Data.includes('image/jpeg')) ext = 'jpg';
             if (base64Data.includes('image/webp')) ext = 'webp';
 
-            imgFolder.file(`${img.name}.${ext}`, base64Str, { base64: true });
+            // Avoid double extensions if img.name already has one
+            let fileName = img.name;
+            if (!fileName.includes('.')) {
+                fileName = `${fileName}.${ext}`;
+            }
+
+            imgFolder.file(fileName, base64Str, { base64: true });
         }
     }
 
@@ -65,7 +71,10 @@ export const importProjectFromZip = async (zipFile) => {
 
     for (const imgMeta of state.images) {
         // Find the corresponding image file in the zip
-        const fileMatches = Object.keys(loadedZip.files).filter(k => k.startsWith(`images/${imgMeta.name}.`));
+        // Backward compatible with old zips that had double extensions
+        const fileMatches = Object.keys(loadedZip.files).filter(k => 
+            k === `images/${imgMeta.name}` || k.startsWith(`images/${imgMeta.name}.`)
+        );
 
         if (fileMatches.length > 0) {
             const imgFile = loadedZip.file(fileMatches[0]);
