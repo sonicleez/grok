@@ -11,6 +11,7 @@ function App() {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('gemini-2.5-pro');
   const [contextPrompt, setContextPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
   const [selectedSkillId, setSelectedSkillId] = useState(DEFAULT_SKILL_ID);
   const [systemPrompt, setSystemPrompt] = useState(getTemplateById(DEFAULT_SKILL_ID).systemPrompt);
   const [showSettings, setShowSettings] = useState(false);
@@ -32,6 +33,7 @@ function App() {
       if (state.apiKey) setApiKey(state.apiKey);
       if (state.model) setModel(state.model);
       if (state.contextPrompt) setContextPrompt(state.contextPrompt);
+      if (state.negativePrompt) setNegativePrompt(state.negativePrompt);
       if (state.selectedSkillId) setSelectedSkillId(state.selectedSkillId);
       if (state.systemPrompt) setSystemPrompt(state.systemPrompt);
       if (state.images) {
@@ -47,9 +49,9 @@ function App() {
   // Save state on changes
   useEffect(() => {
     if (isStateLoaded) {
-      saveState({ apiKey, model, contextPrompt, selectedSkillId, systemPrompt, images: images.map(img => ({ ...img, file: null, url: null })) });
+      saveState({ apiKey, model, contextPrompt, negativePrompt, selectedSkillId, systemPrompt, images: images.map(img => ({ ...img, file: null, url: null })) });
     }
-  }, [apiKey, model, contextPrompt, selectedSkillId, systemPrompt, images, isStateLoaded]);
+  }, [images, apiKey, model, contextPrompt, negativePrompt, selectedSkillId, systemPrompt, isStateLoaded]);
 
   // Load images from IndexedDB when rendering and URL is missing
   const [base64Cache, setBase64Cache] = useState({});
@@ -171,7 +173,7 @@ function App() {
 
       try {
         const b64 = base64Cache[img.id] || await getImage(img.id);
-        const prompt = await generateGrokPrompt(apiKey, model, b64, contextPrompt, systemPrompt);
+        const prompt = await generateGrokPrompt(apiKey, model, b64, contextPrompt, systemPrompt, negativePrompt);
 
         setImages(prev => {
           const next = [...prev];
@@ -379,11 +381,23 @@ function App() {
               <label>Global Context (Tone, Motion, Emotion)</label>
               <textarea
                 className="input-base"
-                rows="4"
+                rows="3"
                 style={{ resize: 'vertical' }}
-                placeholder="E.g., Soft morning light, gentle breeze, calm atmosphere..."
+                placeholder="E.g., Soft morning light, gentle breeze..."
                 value={contextPrompt}
                 onChange={(e) => setContextPrompt(e.target.value)}
+              />
+            </div>
+            
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label>Negative Context (Do NOT include)</label>
+              <textarea
+                className="input-base"
+                rows="2"
+                style={{ resize: 'vertical', border: '1px solid var(--danger-color)' }}
+                placeholder="E.g., Morphing, moving camera, text, people..."
+                value={negativePrompt}
+                onChange={(e) => setNegativePrompt(e.target.value)}
               />
             </div>
 

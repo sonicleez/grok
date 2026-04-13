@@ -5,7 +5,7 @@
 
 const EZAI_BASE_URL = '/api/ezai';
 
-export const generateGrokPrompt = async (apiKey, model, base64Image, contextPrompt, systemPrompt) => {
+export const generateGrokPrompt = async (apiKey, model, base64Image, contextPrompt, systemPrompt, negativePrompt = '') => {
     if (!apiKey) {
         throw new Error('API Key is missing');
     }
@@ -32,12 +32,25 @@ export const generateGrokPrompt = async (apiKey, model, base64Image, contextProm
     const baseSystemPrompt = systemPrompt || 'You are an expert video director. Analyze the image and generate a concise, cinematic video prompt.';
 
     // Always enforce output-only rule regardless of what the user writes in the system prompt
-    const finalSystemPrompt = baseSystemPrompt + `
+    const finalSystemPrompt = `[HARD CONSTRAINT]
+You MUST maintain 100% exact visual continuity with the reference image. Describe the EXACT clothing, EXACT lighting, EXACT physical features, and EXACT environment present in the image. DO NOT hallucinate elements, features, or weather conditions that are not visible.
+
+` + baseSystemPrompt + `
 
 ===ABSOLUTE OUTPUT RULE (overrides everything above)===
 Output ONLY the final prompt text as a single plain paragraph.
 NO explanations. NO options. NO "Option 1 / Option 2". NO markdown. NO headers. NO bullet points. NO labels. NO opening phrases like "Here is..." or "Based on the image...". NO advice or commentary.
 Just the raw prompt string. Nothing else.`;
+
+    let userText = `Generate a concise Image-to-Video prompt for this image.`;
+    
+    if (contextPrompt && contextPrompt.trim().length > 0) {
+        userText += `\n\n[DIRECTOR'S OVERRIDE - HIGHEST PRIORITY]\n"${contextPrompt.trim()}"\n(You must enforce this tone, motion, or emotion into the prompt. It overrides visual suggestions if conflicted.)`;
+    }
+    
+    if (negativePrompt && negativePrompt.trim().length > 0) {
+        userText += `\n\n[NEGATIVE CONSTRAINTS - STRICTLY FORBIDDEN]\n"${negativePrompt.trim()}"\n(DO NOT include any of these concepts, themes, or objects in the final prompt.)`;
+    }
 
     const payload = {
         model: model || 'gemini-3-flash',
@@ -58,9 +71,7 @@ Just the raw prompt string. Nothing else.`;
                     },
                     {
                         type: 'text',
-                        text: contextPrompt && contextPrompt.trim().length > 0
-                            ? `Generate a concise Image-to-Video prompt for this image.\n\nUSER CONTEXT:\n"${contextPrompt}"\n\nApply the context subtly. Focus on gentle camera motion (dolly or pan) and avoid detailed character actions. Ensure uniform sharpness.`
-                            : 'Generate a concise Image-to-Video prompt for this image. Focus on gentle camera motion (dolly or pan), subtle environmental motion, and uniform sharpness. Avoid detailed character actions.'
+                        text: userText
                     }
                 ]
             }
