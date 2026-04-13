@@ -49,7 +49,19 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body),
     });
 
-    const data = await response.json();
+    const textBody = await response.text();
+    let data;
+    try {
+      data = JSON.parse(textBody);
+    } catch (parseError) {
+      // Upstream returned non-JSON (e.g. Cloudflare HTML error page)
+      data = {
+        error: {
+          message: `Upstream error (${response.status}): ${textBody.substring(0, 150)}...`,
+          type: 'upstream_format_error'
+        }
+      };
+    }
 
     // Set CORS headers for the response
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -62,6 +74,7 @@ export default async function handler(req, res) {
         message: `Proxy error: ${error.message}`,
         type: 'proxy_error',
       },
+
     });
   }
 }
