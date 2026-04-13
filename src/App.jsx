@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings, FolderOpen, Image as ImageIcon, Play, FileDown, FileUp, Copy, Check, Trash2, StopCircle } from 'lucide-react';
+import { Settings, FolderOpen, Image as ImageIcon, Play, FileDown, FileUp, Copy, Check, Trash2, StopCircle, RotateCcw, ChevronDown } from 'lucide-react';
 import { saveImage, getImage, clearImages, saveState, loadState } from './services/storage';
 import { generateGrokPrompt } from './services/api';
 import { exportProjectToZip, importProjectFromZip } from './utils';
+import { SKILL_TEMPLATES, DEFAULT_SKILL_ID, getTemplateById } from './skillTemplates';
 import './App.css';
 
 function App() {
@@ -10,10 +11,13 @@ function App() {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('gemini-2.5-pro');
   const [contextPrompt, setContextPrompt] = useState('');
+  const [selectedSkillId, setSelectedSkillId] = useState(DEFAULT_SKILL_ID);
+  const [systemPrompt, setSystemPrompt] = useState(getTemplateById(DEFAULT_SKILL_ID).systemPrompt);
   const [showSettings, setShowSettings] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
   const isCancelledRef = useRef(false);
+  const [queueError, setQueueError] = useState(null); // { message, retryAfter }
 
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef(null);
@@ -28,6 +32,8 @@ function App() {
       if (state.apiKey) setApiKey(state.apiKey);
       if (state.model) setModel(state.model);
       if (state.contextPrompt) setContextPrompt(state.contextPrompt);
+      if (state.selectedSkillId) setSelectedSkillId(state.selectedSkillId);
+      if (state.systemPrompt) setSystemPrompt(state.systemPrompt);
       if (state.images) {
         const resetImages = state.images.map(img =>
           img.status === 'processing' ? { ...img, status: 'pending' } : img
@@ -41,9 +47,9 @@ function App() {
   // Save state on changes
   useEffect(() => {
     if (isStateLoaded) {
-      saveState({ apiKey, model, contextPrompt, images: images.map(img => ({ ...img, file: null, url: null })) });
+      saveState({ apiKey, model, contextPrompt, selectedSkillId, systemPrompt, images: images.map(img => ({ ...img, file: null, url: null })) });
     }
-  }, [apiKey, model, contextPrompt, images, isStateLoaded]);
+  }, [apiKey, model, contextPrompt, selectedSkillId, systemPrompt, images, isStateLoaded]);
 
   // Load images from IndexedDB when rendering and URL is missing
   const [base64Cache, setBase64Cache] = useState({});
@@ -141,18 +147,18 @@ function App() {
 
   const processQueue = async () => {
     if (!apiKey) {
-      alert("Please set your API Key in Settings first.");
       setShowSettings(true);
+      setQueueError({ message: 'API Key is missing. Please set it in Settings.', retryAfter: null });
       return;
     }
 
     setIsProcessing(true);
     setIsCancelled(false);
+    setQueueError(null);
     isCancelledRef.current = false;
 
-    // Use a while loop with ref to make sure we always have fresh state
     for (let i = 0; i < images.length; i++) {
-      if (isCancelledRef.current) break; // Check cancellation flag
+      if (isCancelledRef.current) break;
 
       const img = images[i];
       if (img.status === 'done') continue;
@@ -165,7 +171,7 @@ function App() {
 
       try {
         const b64 = base64Cache[img.id] || await getImage(img.id);
-        const prompt = await generateGrokPrompt(apiKey, model, b64, contextPrompt);
+        const prompt = await generateGrokPrompt(apiKey, model, b64, contextPrompt, systemPrompt);
 
         setImages(prev => {
           const next = [...prev];
@@ -175,16 +181,26 @@ function App() {
         });
 
       } catch (error) {
-        console.error("Error processing " + img.name, error);
+        console.error('Error processing ' + img.name, error);
         setImages(prev => {
           const next = [...prev];
           next[i].status = 'error';
           return next;
         });
+
+        // 429: Stop queue immediately — no point hammering with bad key
+        if (error.isRateLimit) {
+          isCancelledRef.current = true;
+          setQueueError({
+            message: error.message,
+            retryAfter: error.retryAfter,
+          });
+          break;
+        }
       }
 
-      // small delay to prevent rapid-fire blocking
-      await new Promise(r => setTimeout(r, 500));
+      // Delay between requests to avoid rate limiting
+      await new Promise(r => setTimeout(r, 1500));
     }
 
     setIsProcessing(false);
@@ -240,35 +256,105 @@ function App() {
         </button>
       </header>
 
+      {/* ── Error Banner ─────────────────────────────────── */}
+      {queueError && (
+        <div className="error-banner">
+          <div className="error-banner-content">
+            <span className="error-banner-icon">⚠️</span>
+            <div className="error-banner-body">
+              <strong>
+                {queueError.retryAfter ? '429 — Rate Limited / Auth Failed' : 'Config Error'}
+              </strong>
+              <p>{queueError.message}</p>
+              {queueError.retryAfter && (
+                <p className="error-retry-hint">
+                  ⏱ Wait <strong>{queueError.retryAfter}s</strong> then verify your API Key in Settings before retrying.
+                </p>
+              )}
+            </div>
+            <button className="error-banner-close" onClick={() => setQueueError(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
       {showSettings && (
         <div className="settings-panel glass-panel animate-fade-in">
           <h2>Configuration</h2>
-          <div className="form-group">
-            <label>EzAI API Key</label>
-            <input
-              type="password"
-              className="input-base"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="sk-..."
-            />
+
+          {/* --- API & Model --- */}
+          <div className="settings-section">
+            <div className="form-group">
+              <label>EzAI API Key</label>
+              <input
+                type="password"
+                className="input-base"
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+                placeholder="sk-..."
+              />
+            </div>
+            <div className="form-group">
+              <label>Model</label>
+              <select className="input-base" value={model} onChange={e => setModel(e.target.value)}>
+                <option value="gemini-3-flash">Gemini 3 Flash (Fast &amp; Vision)</option>
+                <option value="gemini-3-pro">Gemini 3 Pro</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+                <option value="claude-opus-4-6">Claude Opus 4.6</option>
+                <option value="grok-code-fast-1">Grok Fast</option>
+                <option value="gpt-5.4">GPT-5.4</option>
+              </select>
+            </div>
           </div>
-          <div className="form-group">
-            <label>Model</label>
-            <select className="input-base" value={model} onChange={e => setModel(e.target.value)}>
-              <option value="gemini-3-flash">Gemini 3 Flash (Fast & Vision)</option>
-              <option value="gemini-3-pro">Gemini 3 Pro</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-              <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
-              <option value="claude-opus-4-6">Claude Opus 4.6</option>
-              <option value="grok-code-fast-1">Grok Fast</option>
-              <option value="gpt-5.4">GPT-5.4</option>
-            </select>
+
+          {/* --- Skill / Platform --- */}
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <div className="skill-header">
+              <h3 className="settings-section-title">🎯 Skill Template</h3>
+              <span className="skill-hint">Pick platform → edit prompt below</span>
+            </div>
+            <div className="skill-presets">
+              {SKILL_TEMPLATES.map(tpl => (
+                <button
+                  key={tpl.id}
+                  className={`skill-btn ${selectedSkillId === tpl.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedSkillId(tpl.id);
+                    setSystemPrompt(tpl.systemPrompt);
+                  }}
+                >
+                  {tpl.emoji} {tpl.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="form-group" style={{ marginTop: '14px' }}>
+              <div className="system-prompt-label-row">
+                <label>System Prompt</label>
+                <button
+                  className="btn-icon-sm"
+                  title="Reset to template default"
+                  onClick={() => setSystemPrompt(getTemplateById(selectedSkillId).systemPrompt)}
+                >
+                  <RotateCcw size={13} /> Reset
+                </button>
+              </div>
+              <textarea
+                className="input-base system-prompt-textarea"
+                value={systemPrompt}
+                onChange={e => setSystemPrompt(e.target.value)}
+                rows={12}
+                spellCheck={false}
+                placeholder="Enter system prompt for the AI model..."
+              />
+            </div>
           </div>
         </div>
       )}
 
       <main className="main-content">
+
         <aside className="sidebar glass-panel">
           <h3>Controls</h3>
 

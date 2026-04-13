@@ -1,25 +1,11 @@
 /**
- * EzAI API Client for Grok Image-to-Video Prompts
+ * EzAI API Client for Video Prompt Generation
+ * Supports dynamic system prompts (Grok, Veo3, Seedance, Kling, Custom...)
  */
 
 const EZAI_BASE_URL = '/api/ezai';
 
-const GROK_SYSTEM_PROMPT = `You are an expert video director prompter for Grok.com/imagine (Image-to-Video) in 2026. 
-Your task is to generate a concise, cinematic prompt for a video generation model based on the provided image and context.
-
-CRITICAL INSTRUCTIONS:
-1. [Conciseness] - Keep the description brief. Do not over-describe.
-2. [What we see] - Describe the scene with UNIFORM SHARPNESS — everything must be crisp and in focus. ABSOLUTELY NO BOKEH or BLUR.
-3. [Subtle Motion] - Describe only natural or environmental motion (e.g., "soft wind", "subtle light shifts"). DO NOT describe detailed character actions or complex hero movements.
-4. [Camera Motion] - Use ONLY a "gentle dolly" or a "light pan". Keep it smooth and subtle.
-
-TEMPLATE:
-[Brief scene description]. [Subtle environmental motion]. [Subtle camera move: dolly or pan]. Keep exact same face, clothing, pose, lighting and details from the source image, no morphing, no warping. Smooth natural 24fps motion, cinematic, photorealistic, 720p, high detail. No bokeh, no depth-of-field blur, no lens blur, no gaussian blur, no tilt-shift, no background blur — everything must be sharp and in focus with deep depth of field.
-
-Output ONLY the final prompt text. No introduction, no explanations.`;
-
-
-export const generateGrokPrompt = async (apiKey, model, base64Image, contextPrompt) => {
+export const generateGrokPrompt = async (apiKey, model, base64Image, contextPrompt, systemPrompt) => {
     if (!apiKey) {
         throw new Error('API Key is missing');
     }
@@ -43,11 +29,21 @@ export const generateGrokPrompt = async (apiKey, model, base64Image, contextProm
         mimeType = 'image/jpeg';
     }
 
+    const baseSystemPrompt = systemPrompt || 'You are an expert video director. Analyze the image and generate a concise, cinematic video prompt.';
+
+    // Always enforce output-only rule regardless of what the user writes in the system prompt
+    const finalSystemPrompt = baseSystemPrompt + `
+
+===ABSOLUTE OUTPUT RULE (overrides everything above)===
+Output ONLY the final prompt text as a single plain paragraph.
+NO explanations. NO options. NO "Option 1 / Option 2". NO markdown. NO headers. NO bullet points. NO labels. NO opening phrases like "Here is..." or "Based on the image...". NO advice or commentary.
+Just the raw prompt string. Nothing else.`;
+
     const payload = {
         model: model || 'gemini-3-flash',
         max_tokens: 1500,
         temperature: 0.7,
-        system: GROK_SYSTEM_PROMPT,
+        system: finalSystemPrompt,
         messages: [
             {
                 role: 'user',
@@ -85,7 +81,19 @@ export const generateGrokPrompt = async (apiKey, model, base64Image, contextProm
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(`API Error (${response.status}): ${errorData.error?.message || response.statusText}`);
+            const errMsg = errorData.error?.message || response.statusText;
+
+            // Special handling for 429 rate limit / auth lockout
+            if (response.status === 429) {
+                const err = new Error(`API Error (429): ${errMsg}`);
+                err.isRateLimit = true;
+                // Extract "try again in N seconds" from error message
+                const match = errMsg.match(/(\d+)\s*second/i);
+                err.retryAfter = match ? parseInt(match[1]) : 60;
+                throw err;
+            }
+
+            throw new Error(`API Error (${response.status}): ${errMsg}`);
         }
 
         const data = await response.json();
