@@ -1,4 +1,4 @@
-const OLLAMA_PROXY_BASE_URL = '/api/ollama';
+const OLLAMA_CHAT_COMPLETIONS_URL = '/api/ollama-chat-completions';
 
 export const DEFAULT_VISION_MODEL = 'gemini-3-flash-preview:cloud';
 
@@ -94,7 +94,7 @@ Just the raw prompt string. Nothing else.`;
     };
 
     try {
-        const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/chat/completions`, {
+        const response = await fetch(OLLAMA_CHAT_COMPLETIONS_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

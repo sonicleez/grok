@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/ollama': {
-        target: 'https://ollama.com/v1',
+      '/api/ollama-chat-completions': {
+        target: 'https://ollama.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/ollama/, ''),
+        rewrite: () => '/v1/chat/completions',
       },
     },
   },

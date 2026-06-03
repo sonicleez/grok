@@ -1,4 +1,4 @@
-const OLLAMA_API_BASE_URL = 'https://ollama.com/v1';
+const OLLAMA_CHAT_COMPLETIONS_URL = 'https://ollama.com/v1/chat/completions';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -13,12 +13,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { path } = req.query;
-  const targetPath = Array.isArray(path) ? path.join('/') : path || '';
-  const targetUrl = `${OLLAMA_API_BASE_URL}/${targetPath}`;
-
   try {
-    const response = await fetch(targetUrl, {
+    const response = await fetch(OLLAMA_CHAT_COMPLETIONS_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +40,7 @@ export default async function handler(req, res) {
 
     return res.status(response.status).json(data);
   } catch (error) {
-    console.error('Ollama proxy error:', error);
+    console.error('Ollama chat completions proxy error:', error);
     return res.status(502).json({
       error: `Proxy error: ${error.message}`,
     });

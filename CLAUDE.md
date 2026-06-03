@@ -32,7 +32,7 @@ This is a single-page React + Vite app for batch-generating image-to-video promp
 
 - API integration: [src/services/api.js](src/services/api.js)
   - Defines canonical system prompt constraints for generated video prompts (concise output, subtle motion, no blur/bokeh, gentle dolly/pan).
-  - Sends OpenAI-compatible multimodal payloads (`image_url` data URLs + text context) to `'/api/ollama/chat/completions'` with an Ollama Cloud bearer token.
+  - Sends OpenAI-compatible multimodal payloads (`image_url` data URLs + text context) to `'/api/ollama-chat-completions'` with an Ollama Cloud bearer token.
   - Tracks which Ollama Cloud vision models are enabled after live image-input checks.
 
 - Persistence layer: [src/services/storage.js](src/services/storage.js)
@@ -57,4 +57,4 @@ This is a single-page React + Vite app for batch-generating image-to-video promp
 
 ## Deployment/proxy expectation
 
-- Frontend calls Ollama Cloud through `'/api/ollama'` (see [src/services/api.js](src/services/api.js)); this assumes a serverless/API proxy exists in deployment. Keep this contract stable unless proxy routing is intentionally changed.
+- Frontend calls Ollama Cloud through `'/api/ollama-chat-completions'` (see [src/services/api.js](src/services/api.js)); this assumes a serverless/API proxy exists in deployment. Keep this contract stable unless proxy routing is intentionally changed.
