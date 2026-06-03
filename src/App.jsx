@@ -321,6 +321,14 @@ function App() {
             <div className="provider-empty-state">
               <strong>Ollama Cloud</strong>
               <p>Uses Ollama's OpenAI-compatible cloud API. Gemini 3 Flash Preview passed live image-input testing; Kimi K2.6 and Qwen3.6 are shown only as unavailable notes.</p>
+              <div className="provider-links">
+                <a href="https://ollama.com/pricing" target="_blank" rel="noreferrer">
+                  Buy directly from Ollama Cloud
+                </a>
+                <a href="https://t.me/+xeyMhj4X40dlYWM1" target="_blank" rel="noreferrer">
+                  Buy 20% cheaper via Telegram group
+                </a>
+              </div>
             </div>
           </div>
 

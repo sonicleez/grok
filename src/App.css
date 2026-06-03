@@ -283,6 +283,23 @@
   line-height: 1.45;
 }
 
+.provider-links {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.provider-links a {
+  color: var(--accent-color);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.provider-links a:hover {
+  text-decoration: underline;
+}
+
 /* ── Skill header row ──────────────────────────────────── */
 .skill-header {
   display: flex;
