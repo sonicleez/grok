@@ -4,8 +4,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/ezai/(.*)",
-      "destination": "/api/ezai/$1"
+      "source": "/api/ollama/(.*)",
+      "destination": "/api/ollama/$1"
     }
   ]
 }

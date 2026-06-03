@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Settings, FolderOpen, Image as ImageIcon, Play, FileDown, FileUp, Copy, Check, Trash2, StopCircle, RotateCcw, ChevronDown } from 'lucide-react';
 import { saveImage, getImage, clearImages, saveState, loadState } from './services/storage';
-import { generateGrokPrompt } from './services/api';
+import {
+  DEFAULT_VISION_MODEL,
+  VISION_MODEL_OPTIONS,
+  generateGrokPrompt,
+  isSupportedVisionModel,
+  isVisionProviderConfigured
+} from './services/api';
 import { exportProjectToZip, importProjectFromZip } from './utils';
 import { SKILL_TEMPLATES, DEFAULT_SKILL_ID, getTemplateById } from './skillTemplates';
 import './App.css';
@@ -9,7 +15,7 @@ import './App.css';
 function App() {
   const [images, setImages] = useState([]); // { id, name, url, file, prompt, status: 'pending' | 'processing' | 'done' | 'error' }
   const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('gemini-2.5-pro');
+  const [model, setModel] = useState(DEFAULT_VISION_MODEL);
   const [contextPrompt, setContextPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [selectedSkillId, setSelectedSkillId] = useState(DEFAULT_SKILL_ID);
@@ -31,7 +37,11 @@ function App() {
     const state = loadState();
     if (state) {
       if (state.apiKey) setApiKey(state.apiKey);
-      if (state.model) setModel(state.model);
+      if (isSupportedVisionModel(state.model)) {
+        setModel(state.model);
+      } else {
+        setModel(DEFAULT_VISION_MODEL);
+      }
       if (state.contextPrompt) setContextPrompt(state.contextPrompt);
       if (state.negativePrompt) setNegativePrompt(state.negativePrompt);
       if (state.selectedSkillId) setSelectedSkillId(state.selectedSkillId);
@@ -148,9 +158,12 @@ function App() {
   };
 
   const processQueue = async () => {
-    if (!apiKey) {
+    if (!isVisionProviderConfigured({ apiKey, model })) {
       setShowSettings(true);
-      setQueueError({ message: 'API Key is missing. Please set it in Settings.', retryAfter: null });
+      setQueueError({
+        message: 'Ollama Cloud API key and vision model are required before generating prompts.',
+        retryAfter: null
+      });
       return;
     }
 
@@ -190,11 +203,11 @@ function App() {
           return next;
         });
 
-        // 429: Stop queue immediately — no point hammering with bad key
-        if (error.isRateLimit) {
+        // Stop immediately for provider-level errors; retrying every image will fail the same way.
+        if (error.isRateLimit || error.isUnsupportedImageInput || error.isProviderMissing || error.isAuthError) {
           isCancelledRef.current = true;
           setQueueError({
-            message: error.message,
+            message: error.userMessage || error.message,
             retryAfter: error.retryAfter,
           });
           break;
@@ -265,12 +278,12 @@ function App() {
             <span className="error-banner-icon">⚠️</span>
             <div className="error-banner-body">
               <strong>
-                {queueError.retryAfter ? '429 — Rate Limited / Auth Failed' : 'Config Error'}
+                {queueError.retryAfter ? '429 — Rate Limited / Auth Failed' : 'API Request Failed'}
               </strong>
               <p>{queueError.message}</p>
               {queueError.retryAfter && (
                 <p className="error-retry-hint">
-                  ⏱ Wait <strong>{queueError.retryAfter}s</strong> then verify your API Key in Settings before retrying.
+                  Wait <strong>{queueError.retryAfter}s</strong> then verify the provider settings before retrying.
                 </p>
               )}
             </div>
@@ -283,29 +296,31 @@ function App() {
         <div className="settings-panel glass-panel animate-fade-in">
           <h2>Configuration</h2>
 
-          {/* --- API & Model --- */}
+          {/* --- Provider --- */}
           <div className="settings-section">
             <div className="form-group">
-              <label>EzAI API Key</label>
+              <label>Ollama Cloud API Key</label>
               <input
                 type="password"
                 className="input-base"
                 value={apiKey}
                 onChange={e => setApiKey(e.target.value)}
-                placeholder="sk-..."
+                placeholder="ollama API key"
               />
             </div>
             <div className="form-group">
-              <label>Model</label>
+              <label>Vision Model</label>
               <select className="input-base" value={model} onChange={e => setModel(e.target.value)}>
-                <option value="gemini-3-flash">Gemini 3 Flash (Fast &amp; Vision)</option>
-                <option value="gemini-3-pro">Gemini 3 Pro</option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
-                <option value="claude-opus-4-6">Claude Opus 4.6</option>
-                <option value="grok-code-fast-1">Grok Fast</option>
-                <option value="gpt-5.4">GPT-5.4</option>
+                {VISION_MODEL_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
+            </div>
+            <div className="provider-empty-state">
+              <strong>Ollama Cloud</strong>
+              <p>Uses Ollama's OpenAI-compatible cloud API. Gemini 3 Flash Preview passed live image-input testing; Kimi K2.6 and Qwen3.6 are shown only as unavailable notes.</p>
             </div>
           </div>
 
@@ -404,7 +419,7 @@ function App() {
             <button className="btn" onClick={() => fileInputRef.current?.click()} disabled={isProcessing}>
               <FolderOpen size={18} /> Load Folder
             </button>
-            <button className="btn btn-primary" onClick={processQueue} disabled={isProcessing || images.length === 0}>
+            <button className="btn btn-primary" onClick={processQueue} disabled={isProcessing || images.length === 0 || !isVisionProviderConfigured({ apiKey, model })}>
               <Play size={18} /> Generate Prompts
             </button>
             <button className="btn" onClick={cancelProcessing} disabled={!isProcessing} style={{ color: "var(--danger-color)" }}>

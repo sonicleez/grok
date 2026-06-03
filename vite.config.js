@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/ezai': {
-        target: 'https://ezaiapi.com/v1',
+      '/api/ollama': {
+        target: 'https://ollama.com/v1',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/ezai/, '')
-      }
-    }
-  }
+        rewrite: (path) => path.replace(/^\/api\/ollama/, ''),
+      },
+    },
+  },
 })
